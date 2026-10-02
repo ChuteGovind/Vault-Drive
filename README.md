@@ -2,9 +2,6 @@
 
 Vault-Drive (DriftBox Drive) is an original enterprise-grade Cloud File Storage and Management Application built using **Spring Boot (Java 21)** for the backend RESTful web service and **Flutter (Dart)** with the **BLoC/Cubit state management pattern** for the cross-platform frontend interface.
 
-> [!NOTE]
-> **No Source Code Changes Made**: The application source code (`Drive-BE/src` and `Drive-FE/lib`) remains 100% intact and untouched. This document serves as a complete project specification, class-by-class technical breakdown, architectural map, and HR/Interview presentation guide.
-
 ---
 
 ## 📐 Architecture Overview
@@ -184,44 +181,6 @@ The system uses a **Decoupled Client-Server Architecture** communicating over HT
 #### 12. `features/drive/widgets/file_tile.dart`
 - **Role**: Individual File Item List Tile.
 - **UI Elements**: File type icon, file title, formatted size, formatted date, and dynamic context menu (`PopupMenuButton`) rendering actions based on tab (`Open`, `Rename`, `Move to Trash` for active files; `Restore`, `Delete Permanently` for trash view).
-
----
-
-## 🗣 HR / Technical Interview Presentation Guide (Step-by-Step)
-
-When presenting this project to an HR interviewer or Technical Panel, follow this structured storyline:
-
-### 1. High-Level Pitch (The "Elevator Pitch")
-> "Vault-Drive is a full-stack, enterprise-style cloud storage application built with a Java 21 Spring Boot backend and a cross-platform Flutter frontend using the BLoC pattern. It provides cloud file management features including multi-file drag-and-drop uploads, storage quota tracking (1 GB limit), file search with debouncing, soft deletion (Trash & Restore), image previews, and isolated workspace storage."
-
-### 2. Architecture & Design Decisions
-> "I chose a decoupled architecture to ensure separation of concerns:
-> - **Backend**: Spring Boot provides strong data validation, file stream processing, and REST API controllers backed by MySQL and Hibernate ORM.
-> - **Frontend**: Flutter gives a single codebase for Web, Android, iOS, and Desktop. I implemented the **BLoC/Cubit pattern** to ensure reactive state updates, clean separation of UI from business logic, and predictable state flows."
-
-### 3. Data Flow & Execution Sequence
-> "When a user uploads a file:
-> 1. The user picks or drags a file into `DriveScreen`.
-> 2. `DriveCubit` triggers `uploadFiles()`, updating state to show progress.
-> 3. `DriveRepository` sends a Multipart POST request using `Dio` with a unique persistent authenticated JWT identity.
-> 4. `FileController` in Spring Boot receives the file and passes it to `FileServiceStorage`.
-> 5. The service calculates if `used + new_file_size <= 1 GB`. If valid, it writes the file to disk with a UUID prefix (`uploads/<uuid>_<safename>`) and saves file metadata in MySQL via `FileRepository`.
-> 6. On response, `DriveCubit` refreshes file list and storage quota, instantly updating the UI."
-
-### 4. Key Engineering Highlights to Mention
-- **1 GB Storage Quota Logic**: Real-time aggregation of active file sizes in SQL (`COALESCE(SUM(size), 0)`). Soft-deleted files are excluded from quota, enabling users to free up space when moving files to trash.
-- **File Name Sanitization & Physical Safety**: Disk filenames use UUID prefixes and sanitized paths to prevent path traversal attacks or duplicate filename overwrites, while DB metadata preserves original display names.
-- **Debounced Search**: 350ms debounce timer on input prevents unnecessary network requests while typing.
-- **Responsive & Accessible UI**: Supports dark/light mode, custom design tokens, drag-and-drop target overlays, and progress monitoring.
-
-### 5. Potential HR / Technical Questions & Answers
-
-| Question | Answer |
-| :--- | :--- |
-| **Why did you choose Spring Boot for Backend?** | Spring Boot offers production-grade features out of the box: dependency injection, Spring Data JPA for easy query abstraction, robust HTTP stream handling for large files, and clean layered architecture (Controller-Service-Repository). |
-| **Why did you use Flutter BLoC instead of setState?** | `setState` makes code unmaintainable in large apps. BLoC/Cubit decouples UI components from business logic, making the code testable, reusable, and predictable. UI simply re-renders based on emitted state. |
-| **How do you handle file security and isolation?** | Each authenticated user is isolated by their server-validated username from the JWT. Each user has an independent 1 GB quota and a separate physical upload directory. Files are stored on disk with UUID filenames to prevent direct exposure or overwrite conflicts. |
-| **How does soft deletion (Trash) work?** | Setting `deleted = true` in MySQL hides files from the main view and excludes their size from quota calculations. Users can either restore the file or permanently delete both the database record and physical disk file. |
 
 ---
 
